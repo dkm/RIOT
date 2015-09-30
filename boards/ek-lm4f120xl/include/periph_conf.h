@@ -86,6 +86,16 @@ extern "C" {
 #define UART_1_ISR          isr_uart1
 /** @} */
 
+/**
+ * @name PWM configuration
+ * @{
+ */
+#define PWM_NUMOF           (PWM_0_EN)
+#define PWM_0_EN            1
+  //#define PWM_1_EN            1
+#define PWM_MAX_CHANNELS    1
+
+  
 #ifdef __cplusplus
 }
 #endif

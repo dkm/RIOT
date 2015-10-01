@@ -95,7 +95,10 @@ extern "C" {
   //#define PWM_1_EN            1
 #define PWM_MAX_CHANNELS    1
 
-  
+#define ADC_NUMOF 1
+#define ADC_0_EN 1
+#define ADC_MAX_CHANNELS    12
+
 #ifdef __cplusplus
 }
 #endif

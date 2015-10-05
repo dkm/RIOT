@@ -72,8 +72,6 @@ typedef struct pwm_conf_s {
 int pwm_init(pwm_t dev, pwm_mode_t mode,
 	     unsigned int frequency, unsigned int resolution)
 {
-    int f_real = frequency;
-
     if (dev >= PWM_NUMOF) {
         return -1;
     }
@@ -116,19 +114,34 @@ int pwm_init(pwm_t dev, pwm_mode_t mode,
     ROM_TimerConfigure(timer_base, TIMER_CFG_SPLIT_PAIR | timer_pwm_cfg);
 
     unsigned long clock = ROM_SysCtlClockGet();
-    unsigned long prescale = clock / (frequency * resolution);
-    if (prescale & (~0xFF)){
-      DEBUG("Can't find settings for freq %u at resolution %u\n", frequency, resolution);
+
+    // interface specifies we must keep the resolution
+    unsigned long ticks = resolution;
+    unsigned long real_freq = clock/resolution;
+
+    //    unsigned long prescale = clock / (frequency * resolution);
+    unsigned long prescale_count_extend = ticks >> 16;
+    unsigned long ticks_low = ticks & 0xFFFF;
+
+    if (prescale_count_extend & ~0xFF) {
+      DEBUG("Resolution too high\n");
       return -1;
     }
-    DEBUG("Prescaler set at %lu\n", prescale);
-    ROM_TimerPrescaleSet(timer_base, timer_ab, prescale);
-    uint32_t ticks = resolution; //clock / frequency;
-    DEBUG("Setting ticks at %lu (reqf: %u, freq cpu: %lu)\n", ticks, frequency, clock);
 
-    ROM_TimerMatchSet(timer_base, timer_ab, /* dutyCycle */ 0);
-    ROM_TimerPrescaleMatchSet(timer_base, timer_ab, prescale);
-    ROM_TimerLoadSet(timer_base, timer_ab, /* ticks */ ticks);
+    /* if (prescale & (~0xFF)){ */
+    /*   DEBUG("Can't find settings for freq %u at resolution %u\n", frequency, resolution); */
+    /*   return -1; */
+    /* } */
+    DEBUG("Prescaler set at %lu\n", prescale_count_extend);
+    ROM_TimerPrescaleSet(timer_base, timer_ab, prescale_count_extend);
+
+    //    uint32_t ticks = resolution; //clock / frequency;
+    DEBUG("Setting ticks at %lu (reqf: %u, freq cpu: %lu)\n", ticks, frequency, clock);
+    DEBUG("Real freq: %lu\n", real_freq);
+    
+    ROM_TimerMatchSet(timer_base, timer_ab, /* dutyCycle */ prescale_count_extend);
+    ROM_TimerPrescaleMatchSet(timer_base, timer_ab, 0);
+    ROM_TimerLoadSet(timer_base, timer_ab, /* ticks */ ticks_low);
 
     /* set PWM mode */
     /* switch (mode) { */
@@ -141,7 +154,7 @@ int pwm_init(pwm_t dev, pwm_mode_t mode,
 
     pwm_start(dev);
 
-    return f_real;
+    return real_freq;
 }
 
 int pwm_set(pwm_t dev, int channel, unsigned int value)

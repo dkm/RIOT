@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Rakendra Thapa <rakendrathapa@gmail.com
+ *               2015 Marc Poulhiès <dkm@kataplop.net>
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
@@ -14,6 +15,7 @@
  * @brief       Implementation of the low-level timer driver for the LM4F120
  *
  * @author      Rakendra Thapa <rakendrathapa@gmail.com>
+ *              Marc Poulhiès <dkm@kataplop.net>
  */
 
 #include <stdint.h>
@@ -25,7 +27,6 @@
 #include "periph/timer.h"
 #include "mutex.h"
 
-//#include "timer_lm4f120.h"
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 /* guard file in case no timers are defined */
@@ -54,17 +55,11 @@ PRIV_TimerPrescaleSnapshotGet(unsigned long ulBase, unsigned long ulTimer)
 }
 
 static inline unsigned long long _scaled_to_ll_value(unsigned int uncorrected, unsigned int diviser){
-  //  unsigned long long current_clock = ROM_SysCtlClockGet() / 1000000; // in Mhz, us per clock tick
-  //printf ("TIMER2C uncorrect: %x, clock : %lx\n", uncorrected, (unsigned long)current_clock);
-  // This will fit in the 32 + 16 bits even at 80Mhz.
   unsigned long long scaledv = (unsigned long long) uncorrected * diviser;
-  // printf ("TIMER2C corrected: %x:%x\n", (unsigned int) (scaledv>>32), (unsigned int) (scaledv & 0xFFFFFFFF));
   return scaledv;
 }
 
 static inline unsigned int _llvalue_to_scaled_value(unsigned long long corrected, unsigned int diviser){
-  //  unsigned long current_clock = ROM_SysCtlClockGet() / 1000000; // in Mhz, us per clock tick
-  // This will fit in the 32 + 16 bits even at 80Mhz.
   unsigned long long scaledv = corrected / diviser;
   return scaledv;
 }
@@ -111,8 +106,6 @@ int timer_init(tim_t dev, unsigned int us_per_tick, void (*callback)(int))
     }
 
     ROM_SysCtlPeripheralEnable(sysctl_timer);
-    /* int i = 0xFFFF; */
-    /* while((volatile int)i--); */
 
     ROM_TimerDisable(timer_base, timer_side);
 
@@ -120,13 +113,9 @@ int timer_init(tim_t dev, unsigned int us_per_tick, void (*callback)(int))
 
     ROM_TimerConfigure(timer_base, timer_cfg);
 
-    //	ROM_TimerPrescaleSet(WTIMER0_BASE, TIMER_A, 0xFFFF - prescaler);
     unsigned long long lltimer_val_max = _scaled_to_ll_value(timer_max_val, config[dev].diviser);
 
     ROM_TimerPrescaleSet(timer_base, timer_side, lltimer_val_max >> 32);
-        /* WTIMER0_CFG_R  = TIMER_CFG_16_BIT; */
-        /* WTIMER0_TAMR_R = TIMER_TAMR_TAMR_PERIOD;            /\* Configure for periodic mode *\/ */
-	/* ROM_TimerPrescaleSet(WTIMER0_BASE, TIMER_A, prescaler); */
     ROM_TimerLoadSet(timer_base, timer_side, lltimer_val_max & 0xFFFFFFFF);
         //WTIMER0_TAPR_R = TIMER_0_PRESCALER;                 /* 1us timer0A */
     ROM_TimerIntClear(timer_base, timer_intbit);
@@ -139,13 +128,7 @@ int timer_init(tim_t dev, unsigned int us_per_tick, void (*callback)(int))
     timer_irq_enable(dev);
     timer_start(dev);
 
-    /* DEBUG("startTimeout Value=0x%lx prescale 0x%lx/%lu\n", */
-    /* 	  ROM_TimerLoadGet(WTIMER0_BASE, TIMER_A), */
-    /* 	  ROM_TimerPrescaleGet(WTIMER0_BASE, TIMER_A), */
-    /* 	  ROM_TimerPrescaleGet(WTIMER0_BASE, TIMER_A)); */
     return 1;
-    /* } */
-    /* return -1; */
 }
 
 int timer_set(tim_t dev, int channel, unsigned int timeout)
@@ -167,14 +150,10 @@ int timer_set(tim_t dev, int channel, unsigned int timeout)
       return -1; // unreachable
     }
 
-    /* if (dev == TIMER_0) { */
+
     unsigned int correct_now = timer_read(dev);
     unsigned long long uncorrected_now = _scaled_to_ll_value(correct_now, config[dev].diviser);
-    /* printf("timer_set now(corrected)=0x%x (uncorrect)=0x%llx\n", correct_now, uncorrected_now); */
-    /* printf("timer_set timeout=0x%x\n", timeout); */
     int  r = timer_set_absolute(dev, channel, uncorrected_now+timeout);
-    /* unsigned int correct_after = timer_read(dev); */
-    /* printf("start %u end %u, diff %u\n", correct_now, correct_after ,correct_after - correct_now); */
 
     return r;
 }
@@ -183,8 +162,6 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
 {
   unsigned int timer_base;
   unsigned int timer_side = TIMER_A;
-  //unsigned int timer_intbit = TIMER_CAPA_EVENT;
-  /* unsigned int timer_intbit = TIMER_TIMA_TIMEOUT; */
 
   if (dev >= TIMER_NUMOF){
     return -1;
@@ -207,48 +184,20 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
   }
   ROM_TimerDisable(timer_base, timer_side);
   
-  /* unsigned int correct_now = timer_read(dev);  */
-  /* if (dev == TIMER_0) { */
-  /* // This will fit in the 32 + 16 bits even at 80Mhz */
-  /* unsigned long long scaledv = value * current_clock; */
   unsigned long long scaledv = _scaled_to_ll_value(value, config[dev].diviser);
-  //ROM_TimerIntEnable(timer_base, timer_intbit);
 
-  /* if (scaledv>>32){ */
-  /*   ROM_TimerPrescaleSet(timer_base, timer_side, scaledv >> 32); */
-  /* } else { */
-  /*   ROM_TimerPrescaleSet(timer_base, timer_side, 0); */
-  /* } */
   if (scaledv>>32){
     ROM_TimerPrescaleMatchSet(timer_base, timer_side, scaledv >> 32);
   } else {
     ROM_TimerPrescaleMatchSet(timer_base, timer_side, 0);
   }
 
-  /* ROM_TimerLoadSet(timer_base, timer_side, (unsigned long) (scaledv & 0xFFFFFFFF)); */
   ROM_TimerMatchSet(timer_base, timer_side, (unsigned long) (scaledv & 0xFFFFFFFF));
   //WTIMER0_TAILR_R = 0x00000000 | value;               /* period; Reload value */
-  /* printf("Setting timer absolute value=0x%x / 0x%x:%x\n", */
-  /* 	     value, */
-  /* 	     (unsigned int) (scaledv>>32), */
-  /* 	     (unsigned int)scaledv & 0xFFFFFFFF); */
-  /* unsigned long long now = _scaled_to_ll_value(timer_read(dev), config[dev].diviser); */
-  /* printf("Current time %x:%x\n", (unsigned int)(now>>32), (unsigned int)now & 0xFFFFFFFF); */
-  /* printf("Setting timer match value=0x%x:0x%x / 0x%x:0x%x\n", */
-  /* 	 (unsigned int)((scaledv)>>32), */
-  /* 	 (unsigned int)scaledv & 0xFFFFFFFF, */
-  /* 	 (unsigned int)ROM_TimerPrescaleMatchGet(timer_base, timer_side), */
-  /* 	 (unsigned int)ROM_TimerMatchGet(timer_base,timer_side)); */
 
   ROM_TimerEnable(timer_base, timer_side);
 
-  /* printf("Current timer value=0x%lx\n", ROM_TimerValueGet(WTIMER0_BASE, TIMER_A)); */
   return 1;
-  /* } */
-  /* unsigned int correct_after  =        timer_read(dev); */
-  /* printf("start %u end %u, diff %u\n", correct_now, correct_after ,correct_after - correct_now); */
-
-  /* return -1; */
 }
 
 int timer_clear(tim_t dev, int channel)
@@ -276,18 +225,13 @@ int timer_clear(tim_t dev, int channel)
       break;
     }
 
-
-    /* if (dev == TIMER_0){ */
     ROM_TimerIntClear(timer_base, timer_intbit);
       //        WTIMER0_ICR_R = TIMER_ICR_TATOCINT;
     return 1;
-    /* } */
-    /* return -1; */
 }
 
 unsigned int timer_read(tim_t dev)
 {
-  /* unsigned int now = HWREG(WTIMER0_BASE + TIMER_O_TAR); */
   unsigned int timer_base;
   unsigned int timer_side = TIMER_A;
 
@@ -311,40 +255,15 @@ unsigned int timer_read(tim_t dev)
     break;
   }
 
-  /* if (dev == TIMER_0) { */
-  /* unsigned int currTimer0Val=0; */
-  /* unsigned int loadTimer0Val=0; */
-  /* currTimer0Val = (unsigned int)ROM_TimerValueGet(WTIMER0_BASE, TIMER_A); */
-  /* loadTimer0Val = (unsigned int)ROM_TimerLoadGet(WTIMER0_BASE, TIMER_A); */
-  /* DEBUG("WTIMER0_TAILR_R=0x%lx\t currTimer0Val=0x%x\t loadTimer0Val=0x%x\n", WTIMER0_TAILR_R, currTimer0Val, loadTimer0Val); */
-  /* return (loadTimer0Val - currTimer0Val); */
   unsigned long long high_bits = ((unsigned long long)PRIV_TimerPrescaleSnapshotGet(timer_base, timer_side)) << 32;
   unsigned long long low_bits = (unsigned long long)ROM_TimerValueGet(timer_base, timer_side);
 
-  /* printf("TREAD prescale %lx\n", (unsigned long) (high_bits>>32)); */
-  /* printf("TREAD timer %lx\n", (unsigned long) low_bits); */
-      
   unsigned long long total = high_bits + low_bits;
   DEBUG("Combined %lx:%lx\n", (unsigned long) (total>>32), (unsigned long) (total & 0xFFFFFFFF));
 
   unsigned int scaled_value = _llvalue_to_scaled_value(total, config[dev].diviser);
 
-  /* unsigned long current_clock = ROM_SysCtlClockGet() / 1000000; // in Mhz, us per clock tick */
-  /* unsigned int scaled_value = total/current_clock; */
-  /* printf("Scaled value: %x (timer value: %lx:%lx)\n", */
-  /* 	    scaled_value, */
-  /* 	    (unsigned long) (total>>32), */
-  /* 	    (unsigned long) (total & 0xFFFFFFFF)); */
-
-  /* unsigned int now2 = HWREG(WTIMER0_BASE + TIMER_O_TAR); */
-
-  /* printf ("test : %x / %x\n", */
-  /* 	      _llvalue_to_scaled_value(_scaled_to_ll_value(0xFFFFFFFF)), */
-  /* 	      now2-now); */
-
   return scaled_value;
-  /* } */
-  /* return 0; */
 }
 
 void timer_start(tim_t dev)
@@ -486,22 +405,12 @@ void timer_reset(tim_t dev)
 }
 
 #if TIMER_0_EN
-/* void isr_timer0a(void) */
-/* { */
-/*   ROM_TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT); */
-/*       //    TIMER0_ICR_R = TIMER_ICR_TATOCINT; */
-/*     config[TIMER_0].cb(0); */
-
-/*     if (sched_context_switch_request){ */
-/*         thread_yield(); */
-/*     } */
-/* } */
 void isr_wtimer0a(void)
 {
-  // Clears both IT
-  unsigned long status = ROM_TimerIntStatus(WTIMER0_BASE, TIMER_TIMA_TIMEOUT | TIMER_TIMA_MATCH);
-  printf("Timeout : %lx, Match : %lx\n", status & TIMER_TIMA_TIMEOUT, status & TIMER_TIMA_MATCH);
+  // unsigned long status = ROM_TimerIntStatus(WTIMER0_BASE, TIMER_TIMA_TIMEOUT | TIMER_TIMA_MATCH);
+  // printf("Timeout : %lx, Match : %lx\n", status & TIMER_TIMA_TIMEOUT, status & TIMER_TIMA_MATCH);
 
+  // Clears both IT
   ROM_TimerIntClear(WTIMER0_BASE, TIMER_TIMA_TIMEOUT | TIMER_TIMA_MATCH);
   //   WTIMER0_ICR_R = TIMER_ICR_TATOCINT;
 

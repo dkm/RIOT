@@ -22,6 +22,8 @@
  * @}
  */
 
+#ifndef __CC430__
+
 #include <stdio.h>
 
 #include "cc110x.h"
@@ -177,3 +179,5 @@ uint8_t cc110x_strobe(cc110x_t *dev, uint8_t c)
     spi_release(dev->params.spi);
     return (uint8_t) result;
 }
+
+#endif /* __CC430__ */

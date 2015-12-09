@@ -23,7 +23,11 @@
 #include "board.h"
 #include "periph/cpuid.h"
 #include "periph/gpio.h"
+
+#ifndef __CC430__
 #include "periph/spi.h"
+#endif
+
 #include "xtimer.h"
 #include "cpu.h"
 #include "log.h"
@@ -33,7 +37,12 @@
 #include "cc110x-defines.h"
 #include "cc110x-interface.h"
 #include "cc110x-internal.h"
+
+#ifndef __CC430__
 #include "cc110x-spi.h"
+#else
+#include "cc110x-cc430.h"
+#endif
 
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
@@ -61,10 +70,12 @@ int cc110x_setup(cc110x_t *dev, const cc110x_params_t *params)
     /* Configure GDO1 */
     gpio_init(dev->params.gdo1, GPIO_DIR_IN, GPIO_NOPULL);
 
+#ifndef __CC430__
     /* Configure SPI */
     spi_acquire(dev->params.spi);
     spi_init_master(dev->params.spi, SPI_CONF_FIRST_RISING, SPI_SPEED_5MHZ);
     spi_release(dev->params.spi);
+#endif /* __CC430__ */
 
 #ifndef CC110X_DONT_RESET
     /* reset device*/

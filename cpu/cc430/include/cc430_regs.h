@@ -51,6 +51,46 @@ typedef struct {
 } msp_timer_t;
 
 /**
+ * @brief   Digital I/O Port w/o interrupt functionality (P)
+ */
+typedef struct {
+    REG8    IN;         /**< input data */
+    REG8    padding0;
+    REG8    OD;         /**< output data */
+    REG8    padding1;
+    REG8    DIR;        /**< pin direction */
+    REG8    padding2;
+    REG8    PULL;       /**< resistor pull config */
+    REG8    padding3;
+    REG8    STRENGTH;   /**< resistor drive strength */
+    REG8    padding4;
+    REG8    SEL;        /**< alternative function select */
+} msp_port_t;
+
+/**
+ * @brief   Digital I/O Port with interrupt functionality (P1 & P2)
+ */
+typedef struct {
+    REG8    IN;         /**< input data */
+    REG8    padding0;
+    REG8    OD;         /**< output data */
+    REG8    padding1;
+    REG8    DIR;        /**< pin direction */
+    REG8    padding2;
+    REG8    PULL;       /**< resistor pull config */
+    REG8    padding3;
+    REG8    STRENGTH;   /**< resistor drive strength */
+    REG8    padding4;
+    REG8    SEL;        /**< alternative function select */
+    REG8    padding5[14];
+    REG8    IES;        /**< interrupt edge select */
+    REG8    padding7;
+    REG8    IE;         /**< interrupt enable */
+    REG8    padding8;
+    REG8    IFG;        /**< interrupt flag */
+} msp_port_isr_t;
+
+/**
  * @brief   Timer Control register bitmap
  * @{
  */
@@ -105,6 +145,25 @@ typedef struct {
  */
 #define TIMER_A0_BASE           ((uint16_t)0x0340)
 #define TIMER_A1_BASE           ((uint16_t)0x0380)
+#define PORT_A_BASE             ((uint16_t)0x0200)
+#define PORT_B_BASE             ((uint16_t)0x0220)
+#define PORT_C_BASE             ((uint16_t)0x0240)
+
+/** @} */
+
+/**
+ * @brief   Typing of base register objects
+ * @{
+ */
+#define TIMER_A0                ((msp_timer_t *)TIMER_A0_BASE)
+#define TIMER_A1                ((msp_timer_t *)TIMER_A1_BASE)
+
+#define PORT_1                  ((msp_port_t*)PORT_A_BASE)
+#define PORT_2                  ((msp_port_t*)(PORT_A_BASE + 1))
+#define PORT_3                  ((msp_port_t*)PORT_B_BASE)
+#define PORT_4                  ((msp_port_t*)(PORT_B_BASE + 1))
+#define PORT_5                  ((msp_port_t*)(PORT_C_BASE))
+
 /** @} */
 
 /**
@@ -115,6 +174,8 @@ typedef struct {
 #define TIMER_A1                ((msp_timer_t *)TIMER_A1_BASE)
 /** @} */
 
+
+    
 #ifdef __cplusplus
 }
 #endif

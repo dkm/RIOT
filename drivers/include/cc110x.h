@@ -24,7 +24,10 @@
 extern "C" {
 #endif
 
+#ifndef __CC430__
 #include "periph/spi.h"
+#endif /* __CC430__ */
+
 #include "periph/gpio.h"
 #include "cc110x-internal.h"
 
@@ -32,7 +35,9 @@ extern "C" {
  * @brief Struct for holding cc110x IO parameters
  */
 typedef struct cc110x_params {
+#ifndef __CC430__
     spi_t spi;          /**< what */
+#endif /* __CC430__ */
     gpio_t cs;          /**< does */
     gpio_t gdo0;        /**< this */
     gpio_t gdo1;        /**< look */

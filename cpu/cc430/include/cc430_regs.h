@@ -60,9 +60,9 @@ typedef struct {
     REG8    padding1;
     REG8    DIR;        /**< pin direction */
     REG8    padding2;
-    REG8    PULL;       /**< resistor pull config */
+    REG8    REN;       /**< resistor pull config */
     REG8    padding3;
-    REG8    STRENGTH;   /**< resistor drive strength */
+    REG8    DS;   /**< resistor drive strength */
     REG8    padding4;
     REG8    SEL;        /**< alternative function select */
 } msp_port_t;
@@ -77,9 +77,9 @@ typedef struct {
     REG8    padding1;
     REG8    DIR;        /**< pin direction */
     REG8    padding2;
-    REG8    PULL;       /**< resistor pull config */
+    REG8    REN;       /**< resistor pull config */
     REG8    padding3;
-    REG8    STRENGTH;   /**< resistor drive strength */
+    REG8    DS;   /**< resistor drive strength */
     REG8    padding4;
     REG8    SEL;        /**< alternative function select */
     REG8    padding5[14];

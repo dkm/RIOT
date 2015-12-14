@@ -88,14 +88,28 @@ int gpio_init(gpio_t pin, gpio_dir_t dir, gpio_pp_t pullup)
 {
     msp_port_t *port = _port(pin);
     /* check if port is valid and pull resistor are valid */
-    if ((port == NULL) || (pullup != GPIO_NOPULL)) {
+    if (port == NULL ||
+	(dir == GPIO_DIR_OUT && pullup != GPIO_NOPULL)) {
         return -1;
     }
+    uint8_t pin_bit = _pin(pin);
     /* set pin direction */
-    port->DIR &= ~(_pin(pin));
-    port->DIR |= (dir & _pin(pin));
-    /* reset output value */
-    port->OD &= ~(_pin(pin));
+    port->DIR &= ~(pin_bit);
+    port->DIR |= (dir & pin_bit);
+
+    if (dir == GPIO_DIR_OUT && pullup != GPIO_NOPULL){
+      port->REN |= 0xff & pin_bit;
+      if (pullup == GPIO_PULLUP){
+	port->OD |= 0xff & pin_bit;
+      } else { /* GPIO_PULLDOWN */
+	port->OD &= ~(pin_bit);
+      }
+    } else {
+      port->REN &= ~(pin_bit);
+      /* reset output value */
+      port->OD &= ~(pin_bit);
+    }
+      
     return 0;
 }
 

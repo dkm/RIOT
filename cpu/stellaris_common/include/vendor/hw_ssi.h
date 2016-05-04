@@ -2,25 +2,25 @@
 //
 // hw_ssi.h - Macros used when accessing the SSI hardware.
 //
-// Copyright (c) 2005-2012 Texas Instruments Incorporated.  All rights reserved.
+// Copyright (c) 2005-2013 Texas Instruments Incorporated.  All rights reserved.
 // Software License Agreement
-//
+// 
 //   Redistribution and use in source and binary forms, with or without
 //   modification, are permitted provided that the following conditions
 //   are met:
-//
+// 
 //   Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-//
+// 
 //   Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
+//   documentation and/or other materials provided with the  
 //   distribution.
-//
+// 
 //   Neither the name of Texas Instruments Incorporated nor the names of
 //   its contributors may be used to endorse or promote products derived
 //   from this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,17 +32,13 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// This is part of revision 9453 of the Stellaris Firmware Development Package.
+// 
+// This is part of revision 2.0.1.11577 of the Tiva Firmware Development Package.
 //
 //*****************************************************************************
 
 #ifndef STELLARIS_HW_SSI_H
 #define STELLARIS_HW_SSI_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //*****************************************************************************
 //
@@ -59,6 +55,7 @@ extern "C" {
 #define SSI_O_MIS               0x0000001C  // SSI Masked Interrupt Status
 #define SSI_O_ICR               0x00000020  // SSI Interrupt Clear
 #define SSI_O_DMACTL            0x00000024  // SSI DMA Control
+#define SSI_O_PP                0x00000FC0  // SSI Peripheral Properties
 #define SSI_O_CC                0x00000FC8  // SSI Clock Configuration
 
 //*****************************************************************************
@@ -95,6 +92,15 @@ extern "C" {
 // The following are defines for the bit fields in the SSI_O_CR1 register.
 //
 //*****************************************************************************
+#define SSI_CR1_EOM             0x00000800  // Stop Frame (End of Message)
+#define SSI_CR1_FSSHLDFRM       0x00000400  // FSS Hold Frame
+#define SSI_CR1_HSCLKEN         0x00000200  // High Speed Clock Enable
+#define SSI_CR1_DIR             0x00000100  // SSI Direction of Operation
+#define SSI_CR1_MODE_M          0x000000C0  // SSI Mode
+#define SSI_CR1_MODE_LEGACY     0x00000000  // Legacy SSI mode
+#define SSI_CR1_MODE_BI         0x00000040  // Bi-SSI mode
+#define SSI_CR1_MODE_QUAD       0x00000080  // Quad-SSI Mode
+#define SSI_CR1_MODE_ADVANCED   0x000000C0  // Advanced SSI Mode
 #define SSI_CR1_EOT             0x00000010  // End of Transmission
 #define SSI_CR1_SOD             0x00000008  // SSI Slave Mode Output Disable
 #define SSI_CR1_MS              0x00000004  // SSI Master/Slave Select
@@ -134,6 +140,9 @@ extern "C" {
 // The following are defines for the bit fields in the SSI_O_IM register.
 //
 //*****************************************************************************
+#define SSI_IM_EOTIM            0x00000040  // End of Transmit Interrupt Mask
+#define SSI_IM_DMATXIM          0x00000020  // SSI Transmit DMA Interrupt Mask
+#define SSI_IM_DMARXIM          0x00000010  // SSI Receive DMA Interrupt Mask
 #define SSI_IM_TXIM             0x00000008  // SSI Transmit FIFO Interrupt Mask
 #define SSI_IM_RXIM             0x00000004  // SSI Receive FIFO Interrupt Mask
 #define SSI_IM_RTIM             0x00000002  // SSI Receive Time-Out Interrupt
@@ -146,6 +155,12 @@ extern "C" {
 // The following are defines for the bit fields in the SSI_O_RIS register.
 //
 //*****************************************************************************
+#define SSI_RIS_EOTRIS          0x00000040  // End of Transmit Raw Interrupt
+                                            // Status
+#define SSI_RIS_DMATXRIS        0x00000020  // SSI Transmit DMA Raw Interrupt
+                                            // Status
+#define SSI_RIS_DMARXRIS        0x00000010  // SSI Receive DMA Raw Interrupt
+                                            // Status
 #define SSI_RIS_TXRIS           0x00000008  // SSI Transmit FIFO Raw Interrupt
                                             // Status
 #define SSI_RIS_RXRIS           0x00000004  // SSI Receive FIFO Raw Interrupt
@@ -160,6 +175,12 @@ extern "C" {
 // The following are defines for the bit fields in the SSI_O_MIS register.
 //
 //*****************************************************************************
+#define SSI_MIS_EOTMIS          0x00000040  // End of Transmit Masked Interrupt
+                                            // Status
+#define SSI_MIS_DMATXMIS        0x00000020  // SSI Transmit DMA Masked
+                                            // Interrupt Status
+#define SSI_MIS_DMARXMIS        0x00000010  // SSI Receive DMA Masked Interrupt
+                                            // Status
 #define SSI_MIS_TXMIS           0x00000008  // SSI Transmit FIFO Masked
                                             // Interrupt Status
 #define SSI_MIS_RXMIS           0x00000004  // SSI Receive FIFO Masked
@@ -174,6 +195,9 @@ extern "C" {
 // The following are defines for the bit fields in the SSI_O_ICR register.
 //
 //*****************************************************************************
+#define SSI_ICR_EOTIC           0x00000040  // End of Transmit Interrupt Clear
+#define SSI_ICR_DMATXIC         0x00000020  // SSI Transmit DMA Interrupt Clear
+#define SSI_ICR_DMARXIC         0x00000010  // SSI Receive DMA Interrupt Clear
 #define SSI_ICR_RTIC            0x00000002  // SSI Receive Time-Out Interrupt
                                             // Clear
 #define SSI_ICR_RORIC           0x00000001  // SSI Receive Overrun Interrupt
@@ -186,6 +210,18 @@ extern "C" {
 //*****************************************************************************
 #define SSI_DMACTL_TXDMAE       0x00000002  // Transmit DMA Enable
 #define SSI_DMACTL_RXDMAE       0x00000001  // Receive DMA Enable
+
+//*****************************************************************************
+//
+// The following are defines for the bit fields in the SSI_O_PP register.
+//
+//*****************************************************************************
+#define SSI_PP_FSSHLDFRM        0x00000008  // FSS Hold Frame Capability
+#define SSI_PP_MODE_M           0x00000006  // Mode of Operation
+#define SSI_PP_MODE_LEGACY      0x00000000  // Legacy SSI mode
+#define SSI_PP_MODE_ADVBI       0x00000002  // Advanced SSI and Bi-SSI
+#define SSI_PP_MODE_ADVBIQUAD   0x00000004  // Advanced, Bi- and Quad-SSI
+#define SSI_PP_HSCLK            0x00000001  // High Speed Capability
 
 //*****************************************************************************
 //
